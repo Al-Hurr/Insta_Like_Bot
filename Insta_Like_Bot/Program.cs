@@ -56,8 +56,12 @@ namespace Insta_Like_Bot
                     _retryPolicy.Execute(() =>
                     {
                         ExecuteAsyncJS(driver,
-                            "if(document.querySelector('button[class=\"aOOlW   HoLwm \"]')){document.querySelector('button[class=\"aOOlW   HoLwm \"]').click()}");
+                            "if(document.querySelector('button[class=\"aOOlW   HoLwm \"]')){document.querySelector('button[class=\"aOOlW   HoLwm \"]').click()} arguments[arguments.length - 1]();");
                     });
+
+                    await Delay(3);
+
+                    ExecuteAsyncJS(driver, _containerLikeScript);
                 }
                 catch (Exception ex)
                 {
@@ -90,8 +94,6 @@ namespace Insta_Like_Bot
             passElement.SendKeys(_password);
 
             ClickOnLoginButton(driver);
-
-            // var buttonElement = driver.FindElement(By.CssSelector("button[type=\"submit\""));
         }
 
         private static void ClickOnLoginButton(IWebDriver driver)
@@ -101,9 +103,6 @@ namespace Insta_Like_Bot
                 ExecuteAsyncJS(driver,
                     "if(document.querySelector(\"button[type = 'submit']\")){document.querySelector(\"button[type = 'submit']\").click();} " +
                     "arguments[arguments.length - 1]();");
-                //ExecuteAsyncJS(driver,
-                //    "if(document.querySelector(\"button[type = 'submit']\")){document.querySelector(\"button[type = 'submit']\").click();} " +
-                //    "if(document.querySelector('nav a')){document.querySelector('nav a').click();}");
             });
         }
 
