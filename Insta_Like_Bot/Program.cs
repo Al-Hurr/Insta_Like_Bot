@@ -1,5 +1,6 @@
 ﻿using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Interactions;
 using Polly;
 using Polly.Retry;
 using System;
@@ -16,10 +17,12 @@ namespace Insta_Like_Bot
         private static string _login;
         private static string _password;
         private static readonly string _instaURL = "https://www.instagram.com";
+        // Класс для повторных попыток
         private static RetryPolicy _retryPolicy;
 
         static void Main(string[] args)
         {
+            // Повторить попыкту 2 раза в случае исключния
             _retryPolicy = Policy.Handle<Exception>().Retry(2);
             _containerLikeScript = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "LikeScript.js"));
 
@@ -38,21 +41,28 @@ namespace Insta_Like_Bot
         static async Task MainAsync()
         {
             var options = new ChromeOptions();
+            // Установляем ведение журнала событий
             options.SetLoggingPreference(LogType.Browser, LogLevel.All);
+            // Открываем браузер в режиме разработчика
+            options.AddArguments("--auto-open-devtools-for-tabs");
 
             using (var driver = new ChromeDriver(ChromeDriverService.CreateDefaultService(), options, TimeSpan.FromMinutes(5)))
             {
                 try
                 {
-                    driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromMinutes(5);
+                    // Программа будет выполнятся 7 мин
+                    driver.Manage().Timeouts().AsynchronousJavaScript = TimeSpan.FromMinutes(7);
+                    // Открываем браузер в полноэкранном режиме
+                    driver.Manage().Window.Maximize();
+                    // Метод входа в аккаунт
                     await LogInAsync(driver);
                     await Delay(3);
-
+                    // Нажимаем кнопку Instagram
                     _retryPolicy.Execute(() =>
                     {
                         ExecuteAsyncJS(driver, "if(document.querySelector('nav a')){document.querySelector('nav a').click();} arguments[arguments.length - 1]();");
                     });
-
+                    // Если появится модалка, чтобы включить уведомления, говорим не включать
                     _retryPolicy.Execute(() =>
                     {
                         ExecuteAsyncJS(driver,
@@ -60,7 +70,7 @@ namespace Insta_Like_Bot
                     });
 
                     await Delay(3);
-
+                    // Скрипт для нажатия кнопки "мне нрав"
                     ExecuteAsyncJS(driver, _containerLikeScript);
                 }
                 catch (Exception ex)
@@ -74,11 +84,16 @@ namespace Insta_Like_Bot
                     }
                     throw;
                 }
+                finally
+                {
+                    driver.Quit();
+                }
             }
         }
 
         static void ExecuteAsyncJS(IWebDriver driver, string js, params object[] parameters)
         {
+            // Передаем скрипт для выполнения
             ((IJavaScriptExecutor)driver).ExecuteAsyncScript(js, parameters);
         }
 
